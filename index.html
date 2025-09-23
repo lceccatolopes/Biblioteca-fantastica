@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biblioteca Fantástica</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1e1e1e">
+    <style>
+        body { margin: 0; font-family: Arial, sans-serif; background-color: #1e1e1e; color: #fff; text-align: center; }
+        .login-container, .menu-container, .content-container { display: none; margin-top: 5%; }
+        input[type="password"], input[type="text"], textarea { padding: 10px; border-radius: 5px; border: none; width: 250px; margin-bottom: 10px; }
+        button { padding: 10px 20px; border: none; border-radius: 5px; background-color: #4CAF50; color: white; cursor: pointer; margin: 5px; }
+        button:hover { background-color: #45a049; }
+        .menu-item { margin: 15px; padding: 15px; display: inline-block; background: #333; border-radius: 10px; width: 150px; cursor: pointer; }
+        .menu-item:hover { background: #555; }
+        .card { background: #333; margin: 10px auto; padding: 10px; border-radius: 5px; width: 60%; }
+    </style>
+</head>
+<body>
+    <div class="login-container" id="login">
+        <h1>Biblioteca Fantástica</h1>
+        <input type="password" id="password" placeholder="Digite a senha">
+        <br>
+        <button onclick="checkPassword()">Entrar</button>
+        <p id="error" style="color:red; display:none;">Senha incorreta!</p>
+    </div>
+
+    <div class="menu-container" id="menu">
+        <h1>Bem-vindo à Biblioteca</h1>
+        <div class="menu-item" onclick="openSection('personagens')">Personagens</div>
+        <div class="menu-item" onclick="openSection('historias')">Histórias</div>
+        <div class="menu-item" onclick="openSection('clas')">Clãs</div>
+        <div class="menu-item" onclick="openSection('reinos')">Reinos</div>
+        <div class="menu-item" onclick="exportData()">Exportar Dados</div>
+        <div class="menu-item" onclick="importDataPrompt()">Importar Dados</div>
+    </div>
+
+    <div class="content-container" id="content">
+        <h2 id="section-title"></h2>
+        <div id="cards"></div>
+        <h3>Adicionar Novo</h3>
+        <input type="text" id="new-title" placeholder="Título">
+        <br>
+        <textarea id="new-content" rows="3" placeholder="Conteúdo"></textarea>
+        <br>
+        <button onclick="addCard()">Adicionar</button>
+        <button onclick="goBack()">Voltar ao Menu</button>
+    </div>
+
+    <script>
+        document.getElementById("login").style.display = "block";
+        let currentSection = "";
+        let data = JSON.parse(localStorage.getItem('bibliotecaData')) || { personagens: [], historias: [], clas: [], reinos: [] };
+
+        function saveData() { localStorage.setItem('bibliotecaData', JSON.stringify(data)); }
+
+        function checkPassword() {
+            const password = document.getElementById("password").value;
+            const correctPassword = "1234"; // Troque pela sua senha
+            if(password === correctPassword) {
+                document.getElementById("login").style.display = "none";
+                document.getElementById("menu").style.display = "block";
+            } else { document.getElementById("error").style.display = "block"; }
+        }
+
+        function openSection(section) {
+            currentSection = section;
+            document.getElementById("menu").style.display = "none";
+            document.getElementById("content").style.display = "block";
+            document.getElementById("section-title").innerText = section.charAt(0).toUpperCase() + section.slice(1);
+            renderCards();
+        }
+
+        function renderCards() {
+            const cardsDiv = document.getElementById("cards");
+            cardsDiv.innerHTML = "";
+            data[currentSection].forEach((item, index) => {
+                cardsDiv.innerHTML += `<div class='card'><h4>${item.title}</h4><p>${item.content}</p><button onclick='deleteCard(${index})'>Excluir</button></div>`;
+            });
+        }
+
+        function addCard() {
+            const title = document.getElementById("new-title").value;
+            const content = document.getElementById("new-content").value;
+            if(title && content) {
+                data[currentSection].push({ title, content });
+                saveData();
+                document.getElementById("new-title").value = "";
+                document.getElementById("new-content").value = "";
+                renderCards();
+            }
+        }
+
+        function deleteCard(index) {
+            data[currentSection].splice(index, 1);
+            saveData();
+            renderCards();
+        }
+
+        function goBack() {
+            document.getElementById("content").style.display = "none";
+            document.getElementById("menu").style.display = "block";
+        }
+
+        function exportData() {
+            const dataStr = JSON.stringify(data);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'bibliotecaData.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importDataPrompt() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'application/json';
+            input.onchange = e => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = event => {
+                    try {
+                        const importedData = JSON.parse(event.target.result);
+                        data = importedData;
+                        saveData();
+                        alert('Dados importados com sucesso!');
+                    } catch (err) {
+                        alert('Erro ao importar dados!');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        // Registra o service worker para PWA
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js');
+        }
+    </script>
+</body>
+</html>
