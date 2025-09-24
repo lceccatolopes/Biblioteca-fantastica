@@ -9,12 +9,13 @@
     <style>
         body { margin: 0; font-family: Arial, sans-serif; background-color: #1e1e1e; color: #fff; text-align: center; }
         .menu-container, .content-container { display: none; margin-top: 5%; }
-        input[type="text"], textarea { padding: 10px; border-radius: 5px; border: none; width: 250px; margin-bottom: 10px; }
+        input[type="text"], input[type="file"], textarea { padding: 10px; border-radius: 5px; border: none; width: 250px; margin-bottom: 10px; background: #fff; color:#000;}
         button { padding: 10px 20px; border: none; border-radius: 5px; background-color: #4CAF50; color: white; cursor: pointer; margin: 5px; }
         button:hover { background-color: #45a049; }
         .menu-item { margin: 15px; padding: 15px; display: inline-block; background: #333; border-radius: 10px; width: 150px; cursor: pointer; }
         .menu-item:hover { background: #555; }
         .card { background: #333; margin: 10px auto; padding: 10px; border-radius: 5px; width: 60%; text-align: left; }
+        .card img { max-width: 100%; border-radius: 5px; margin-bottom: 10px; }
         .form-section { margin-top: 20px; }
     </style>
 </head>
@@ -38,10 +39,10 @@
     </div>
 
     <script>
-        // Inicia direto no menu
         document.getElementById("menu").style.display = "block";
 
         let currentSection = "";
+        let editingIndex = -1;
         let data = JSON.parse(localStorage.getItem('bibliotecaData')) || { personagens: [], historias: [], clas: [], reinos: [] };
 
         function saveData() { localStorage.setItem('bibliotecaData', JSON.stringify(data)); }
@@ -55,23 +56,24 @@
             renderForm();
         }
 
-        function renderForm() {
+        function renderForm(personagem = {}) {
             const formArea = document.getElementById("form-area");
             formArea.innerHTML = "";
 
             if(currentSection === "personagens") {
                 formArea.innerHTML = `
-                    <h3>Adicionar Novo Personagem</h3>
-                    <input type="text" id="nome" placeholder="Nome Completo"><br>
-                    <input type="text" id="sexo" placeholder="Sexo"><br>
-                    <input type="text" id="nacionalidade" placeholder="Nacionalidade"><br>
-                    <input type="text" id="raca" placeholder="Raça"><br>
-                    <input type="text" id="cla" placeholder="Clã"><br>
-                    <input type="text" id="origem" placeholder="Origem"><br>
-                    <input type="text" id="poder" placeholder="Poder"><br>
-                    <input type="text" id="motivacao" placeholder="Motivação"><br>
-                    <input type="text" id="escala" placeholder="Escala de Poder"><br>
-                    <button onclick="addCard()">Adicionar</button>
+                    <h3>${editingIndex >= 0 ? "Editar Personagem" : "Adicionar Novo Personagem"}</h3>
+                    <input type="text" id="nome" placeholder="Nome Completo" value="${personagem.nome || ""}"><br>
+                    <input type="text" id="sexo" placeholder="Sexo" value="${personagem.sexo || ""}"><br>
+                    <input type="text" id="nacionalidade" placeholder="Nacionalidade" value="${personagem.nacionalidade || ""}"><br>
+                    <input type="text" id="raca" placeholder="Raça" value="${personagem.raca || ""}"><br>
+                    <input type="text" id="cla" placeholder="Clã" value="${personagem.cla || ""}"><br>
+                    <input type="text" id="origem" placeholder="Origem" value="${personagem.origem || ""}"><br>
+                    <input type="text" id="poder" placeholder="Poder" value="${personagem.poder || ""}"><br>
+                    <input type="text" id="motivacao" placeholder="Motivação" value="${personagem.motivacao || ""}"><br>
+                    <input type="text" id="escala" placeholder="Escala de Poder" value="${personagem.escala || ""}"><br>
+                    <input type="file" id="imagem"><br>
+                    <button onclick="addCard()">${editingIndex >= 0 ? "Salvar Alterações" : "Adicionar"}</button>
                 `;
             } else {
                 formArea.innerHTML = `
@@ -90,6 +92,7 @@
                 if(currentSection === "personagens") {
                     cardsDiv.innerHTML += `
                         <div class='card'>
+                            ${item.imagem ? `<img src="${item.imagem}" alt="Imagem do personagem">` : ""}
                             <strong>Nome:</strong> ${item.nome}<br>
                             <strong>Sexo:</strong> ${item.sexo}<br>
                             <strong>Nacionalidade:</strong> ${item.nacionalidade}<br>
@@ -99,6 +102,7 @@
                             <strong>Poder:</strong> ${item.poder}<br>
                             <strong>Motivação:</strong> ${item.motivacao}<br>
                             <strong>Escala de Poder:</strong> ${item.escala}<br>
+                            <button onclick='editCard(${index})'>Editar</button>
                             <button onclick='deleteCard(${index})'>Excluir</button>
                         </div>`;
                 } else {
@@ -109,28 +113,61 @@
 
         function addCard() {
             if(currentSection === "personagens") {
-                const personagem = {
-                    nome: document.getElementById("nome").value,
-                    sexo: document.getElementById("sexo").value,
-                    nacionalidade: document.getElementById("nacionalidade").value,
-                    raca: document.getElementById("raca").value,
-                    cla: document.getElementById("cla").value,
-                    origem: document.getElementById("origem").value,
-                    poder: document.getElementById("poder").value,
-                    motivacao: document.getElementById("motivacao").value,
-                    escala: document.getElementById("escala").value
-                };
-                data[currentSection].push(personagem);
+                const imagemInput = document.getElementById("imagem");
+                let imagemBase64 = "";
+
+                if(imagemInput.files.length > 0) {
+                    const file = imagemInput.files[0];
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        imagemBase64 = e.target.result;
+                        savePersonagem(imagemBase64);
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    savePersonagem("");
+                }
             } else {
                 const title = document.getElementById("new-title").value;
                 const content = document.getElementById("new-content").value;
                 if(title && content) {
                     data[currentSection].push({ title, content });
+                    saveData();
+                    renderCards();
+                    renderForm();
                 }
             }
+        }
+
+        function savePersonagem(imagem) {
+            const personagem = {
+                nome: document.getElementById("nome").value,
+                sexo: document.getElementById("sexo").value,
+                nacionalidade: document.getElementById("nacionalidade").value,
+                raca: document.getElementById("raca").value,
+                cla: document.getElementById("cla").value,
+                origem: document.getElementById("origem").value,
+                poder: document.getElementById("poder").value,
+                motivacao: document.getElementById("motivacao").value,
+                escala: document.getElementById("escala").value,
+                imagem: imagem
+            };
+
+            if(editingIndex >= 0) {
+                data[currentSection][editingIndex] = personagem;
+                editingIndex = -1;
+            } else {
+                data[currentSection].push(personagem);
+            }
+
             saveData();
             renderCards();
             renderForm();
+        }
+
+        function editCard(index) {
+            editingIndex = index;
+            renderForm(data[currentSection][index]);
         }
 
         function deleteCard(index) {
