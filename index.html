@@ -19,13 +19,6 @@
     </style>
 </head>
 <body>
-    <div class="login-container" id="login">
-        <h1>Biblioteca Fantástica</h1>
-        <input type="password" id="password" placeholder="Digite a senha">
-        <br>
-        <button onclick="checkPassword()">Entrar</button>
-        <p id="error" style="color:red; display:none;">Senha incorreta!</p>
-    </div>
 
     <div class="menu-container" id="menu">
         <h1>Bem-vindo à Biblioteca</h1>
@@ -45,20 +38,11 @@
     </div>
 
     <script>
-        document.getElementById("login").style.display = "block";
+        document.getElementById("menu").style.display = "block";
         let currentSection = "";
         let data = JSON.parse(localStorage.getItem('bibliotecaData')) || { personagens: [], historias: [], clas: [], reinos: [] };
 
         function saveData() { localStorage.setItem('bibliotecaData', JSON.stringify(data)); }
-
-        function checkPassword() {
-            const password = document.getElementById("password").value;
-            const correctPassword = "1234";
-            if(password === correctPassword) {
-                document.getElementById("login").style.display = "none";
-                document.getElementById("menu").style.display = "block";
-            } else { document.getElementById("error").style.display = "block"; }
-        }
 
         function openSection(section) {
             currentSection = section;
@@ -198,3 +182,4 @@
     </script>
 </body>
 </html>
+
