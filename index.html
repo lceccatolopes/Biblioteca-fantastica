@@ -9,14 +9,15 @@
     <style>
         body { margin: 0; font-family: Arial, sans-serif; background-color: #1e1e1e; color: #fff; text-align: center; }
         .menu-container, .content-container { display: none; margin-top: 5%; }
-        input[type="text"], input[type="file"], textarea { padding: 10px; border-radius: 5px; border: none; width: 250px; margin-bottom: 10px; background: #fff; color:#000;}
-        button { padding: 10px 20px; border: none; border-radius: 5px; background-color: #4CAF50; color: white; cursor: pointer; margin: 5px; }
+        input[type="text"], input[type="file"], textarea { padding: 8px; border-radius: 5px; border: none; width: 250px; margin-bottom: 8px; background: #fff; color:#000; }
+        button { padding: 8px 15px; border: none; border-radius: 5px; background-color: #4CAF50; color: white; cursor: pointer; margin: 5px; }
         button:hover { background-color: #45a049; }
         .menu-item { margin: 15px; padding: 15px; display: inline-block; background: #333; border-radius: 10px; width: 150px; cursor: pointer; }
         .menu-item:hover { background: #555; }
         .card { background: #333; margin: 10px auto; padding: 10px; border-radius: 5px; width: 60%; text-align: left; }
         .card img { max-width: 100%; border-radius: 5px; margin-bottom: 10px; }
         .form-section { margin-top: 20px; }
+        .section-title { margin-top: 15px; font-weight: bold; color: #4CAF50; }
     </style>
 </head>
 <body>
@@ -63,15 +64,33 @@
             if(currentSection === "personagens") {
                 formArea.innerHTML = `
                     <h3>${editingIndex >= 0 ? "Editar Personagem" : "Adicionar Novo Personagem"}</h3>
+
+                    <div class="section-title">Informações Básicas</div>
                     <input type="text" id="nome" placeholder="Nome Completo" value="${personagem.nome || ""}"><br>
                     <input type="text" id="sexo" placeholder="Sexo" value="${personagem.sexo || ""}"><br>
+                    <input type="text" id="idade" placeholder="Idade" value="${personagem.idade || ""}"><br>
                     <input type="text" id="nacionalidade" placeholder="Nacionalidade" value="${personagem.nacionalidade || ""}"><br>
                     <input type="text" id="raca" placeholder="Raça" value="${personagem.raca || ""}"><br>
                     <input type="text" id="cla" placeholder="Clã" value="${personagem.cla || ""}"><br>
-                    <input type="text" id="origem" placeholder="Origem" value="${personagem.origem || ""}"><br>
+                    <input type="text" id="profissao" placeholder="Profissão / Cargo" value="${personagem.profissao || ""}"><br>
+                    <input type="text" id="status" placeholder="Status" value="${personagem.status || ""}"><br>
+                    <input type="text" id="afiliacao" placeholder="Afiliação" value="${personagem.afiliacao || ""}"><br>
+
+                    <div class="section-title">História e Relações</div>
+                    <input type="text" id="personalidade" placeholder="Personalidade" value="${personagem.personalidade || ""}"><br>
+                    <input type="text" id="familia" placeholder="Pais / Filhos" value="${personagem.familia || ""}"><br>
+                    <input type="text" id="titulos" placeholder="Títulos Honoríficos" value="${personagem.titulos || ""}"><br>
+
+                    <div class="section-title">Combate e Poderes</div>
+                    <input type="text" id="especialidade" placeholder="Especialidade" value="${personagem.especialidade || ""}"><br>
+                    <input type="text" id="nivel" placeholder="Nível de Experiência" value="${personagem.nivel || ""}"><br>
+                    <input type="text" id="arma" placeholder="Arma Principal" value="${personagem.arma || ""}"><br>
+                    <input type="text" id="elemento" placeholder="Elemento / Afinidade" value="${personagem.elemento || ""}"><br>
                     <input type="text" id="poder" placeholder="Poder" value="${personagem.poder || ""}"><br>
                     <input type="text" id="motivacao" placeholder="Motivação" value="${personagem.motivacao || ""}"><br>
                     <input type="text" id="escala" placeholder="Escala de Poder" value="${personagem.escala || ""}"><br>
+
+                    <div class="section-title">Imagem</div>
                     <input type="file" id="imagem"><br>
                     <button onclick="addCard()">${editingIndex >= 0 ? "Salvar Alterações" : "Adicionar"}</button>
                 `;
@@ -93,12 +112,27 @@
                     cardsDiv.innerHTML += `
                         <div class='card'>
                             ${item.imagem ? `<img src="${item.imagem}" alt="Imagem do personagem">` : ""}
+                            <div class="section-title">Informações Básicas</div>
                             <strong>Nome:</strong> ${item.nome}<br>
                             <strong>Sexo:</strong> ${item.sexo}<br>
+                            <strong>Idade:</strong> ${item.idade}<br>
                             <strong>Nacionalidade:</strong> ${item.nacionalidade}<br>
                             <strong>Raça:</strong> ${item.raca}<br>
                             <strong>Clã:</strong> ${item.cla}<br>
-                            <strong>Origem:</strong> ${item.origem}<br>
+                            <strong>Profissão / Cargo:</strong> ${item.profissao}<br>
+                            <strong>Status:</strong> ${item.status}<br>
+                            <strong>Afiliação:</strong> ${item.afiliacao}<br>
+
+                            <div class="section-title">História e Relações</div>
+                            <strong>Personalidade:</strong> ${item.personalidade}<br>
+                            <strong>Pais / Filhos:</strong> ${item.familia}<br>
+                            <strong>Títulos Honoríficos:</strong> ${item.titulos}<br>
+
+                            <div class="section-title">Combate e Poderes</div>
+                            <strong>Especialidade:</strong> ${item.especialidade}<br>
+                            <strong>Nível de Experiência:</strong> ${item.nivel}<br>
+                            <strong>Arma Principal:</strong> ${item.arma}<br>
+                            <strong>Elemento / Afinidade:</strong> ${item.elemento}<br>
                             <strong>Poder:</strong> ${item.poder}<br>
                             <strong>Motivação:</strong> ${item.motivacao}<br>
                             <strong>Escala de Poder:</strong> ${item.escala}<br>
@@ -143,10 +177,20 @@
             const personagem = {
                 nome: document.getElementById("nome").value,
                 sexo: document.getElementById("sexo").value,
+                idade: document.getElementById("idade").value,
                 nacionalidade: document.getElementById("nacionalidade").value,
                 raca: document.getElementById("raca").value,
                 cla: document.getElementById("cla").value,
-                origem: document.getElementById("origem").value,
+                profissao: document.getElementById("profissao").value,
+                status: document.getElementById("status").value,
+                afiliacao: document.getElementById("afiliacao").value,
+                personalidade: document.getElementById("personalidade").value,
+                familia: document.getElementById("familia").value,
+                titulos: document.getElementById("titulos").value,
+                especialidade: document.getElementById("especialidade").value,
+                nivel: document.getElementById("nivel").value,
+                arma: document.getElementById("arma").value,
+                elemento: document.getElementById("elemento").value,
                 poder: document.getElementById("poder").value,
                 motivacao: document.getElementById("motivacao").value,
                 escala: document.getElementById("escala").value,
