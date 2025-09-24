@@ -14,7 +14,8 @@
         button:hover { background-color: #45a049; }
         .menu-item { margin: 15px; padding: 15px; display: inline-block; background: #333; border-radius: 10px; width: 150px; cursor: pointer; }
         .menu-item:hover { background: #555; }
-        .card { background: #333; margin: 10px auto; padding: 10px; border-radius: 5px; width: 60%; }
+        .card { background: #333; margin: 10px auto; padding: 10px; border-radius: 5px; width: 60%; text-align: left; }
+        .form-section { margin-top: 20px; }
     </style>
 </head>
 <body>
@@ -39,12 +40,7 @@
     <div class="content-container" id="content">
         <h2 id="section-title"></h2>
         <div id="cards"></div>
-        <h3>Adicionar Novo</h3>
-        <input type="text" id="new-title" placeholder="Título">
-        <br>
-        <textarea id="new-content" rows="3" placeholder="Conteúdo"></textarea>
-        <br>
-        <button onclick="addCard()">Adicionar</button>
+        <div id="form-area" class="form-section"></div>
         <button onclick="goBack()">Voltar ao Menu</button>
     </div>
 
@@ -57,7 +53,7 @@
 
         function checkPassword() {
             const password = document.getElementById("password").value;
-            const correctPassword = "1234"; // Troque pela sua senha
+            const correctPassword = "1234";
             if(password === correctPassword) {
                 document.getElementById("login").style.display = "none";
                 document.getElementById("menu").style.display = "block";
@@ -70,26 +66,85 @@
             document.getElementById("content").style.display = "block";
             document.getElementById("section-title").innerText = section.charAt(0).toUpperCase() + section.slice(1);
             renderCards();
+            renderForm();
+        }
+
+        function renderForm() {
+            const formArea = document.getElementById("form-area");
+            formArea.innerHTML = "";
+
+            if(currentSection === "personagens") {
+                formArea.innerHTML = `
+                    <h3>Adicionar Novo Personagem</h3>
+                    <input type="text" id="nome" placeholder="Nome Completo"><br>
+                    <input type="text" id="sexo" placeholder="Sexo"><br>
+                    <input type="text" id="nacionalidade" placeholder="Nacionalidade"><br>
+                    <input type="text" id="raca" placeholder="Raça"><br>
+                    <input type="text" id="cla" placeholder="Clã"><br>
+                    <input type="text" id="origem" placeholder="Origem"><br>
+                    <input type="text" id="poder" placeholder="Poder"><br>
+                    <input type="text" id="motivacao" placeholder="Motivação"><br>
+                    <input type="text" id="escala" placeholder="Escala de Poder"><br>
+                    <button onclick="addCard()">Adicionar</button>
+                `;
+            } else {
+                formArea.innerHTML = `
+                    <h3>Adicionar Novo</h3>
+                    <input type="text" id="new-title" placeholder="Título"><br>
+                    <textarea id="new-content" rows="3" placeholder="Conteúdo"></textarea><br>
+                    <button onclick="addCard()">Adicionar</button>
+                `;
+            }
         }
 
         function renderCards() {
             const cardsDiv = document.getElementById("cards");
             cardsDiv.innerHTML = "";
             data[currentSection].forEach((item, index) => {
-                cardsDiv.innerHTML += `<div class='card'><h4>${item.title}</h4><p>${item.content}</p><button onclick='deleteCard(${index})'>Excluir</button></div>`;
+                if(currentSection === "personagens") {
+                    cardsDiv.innerHTML += `
+                        <div class='card'>
+                            <strong>Nome:</strong> ${item.nome}<br>
+                            <strong>Sexo:</strong> ${item.sexo}<br>
+                            <strong>Nacionalidade:</strong> ${item.nacionalidade}<br>
+                            <strong>Raça:</strong> ${item.raca}<br>
+                            <strong>Clã:</strong> ${item.cla}<br>
+                            <strong>Origem:</strong> ${item.origem}<br>
+                            <strong>Poder:</strong> ${item.poder}<br>
+                            <strong>Motivação:</strong> ${item.motivacao}<br>
+                            <strong>Escala de Poder:</strong> ${item.escala}<br>
+                            <button onclick='deleteCard(${index})'>Excluir</button>
+                        </div>`;
+                } else {
+                    cardsDiv.innerHTML += `<div class='card'><h4>${item.title}</h4><p>${item.content}</p><button onclick='deleteCard(${index})'>Excluir</button></div>`;
+                }
             });
         }
 
         function addCard() {
-            const title = document.getElementById("new-title").value;
-            const content = document.getElementById("new-content").value;
-            if(title && content) {
-                data[currentSection].push({ title, content });
-                saveData();
-                document.getElementById("new-title").value = "";
-                document.getElementById("new-content").value = "";
-                renderCards();
+            if(currentSection === "personagens") {
+                const personagem = {
+                    nome: document.getElementById("nome").value,
+                    sexo: document.getElementById("sexo").value,
+                    nacionalidade: document.getElementById("nacionalidade").value,
+                    raca: document.getElementById("raca").value,
+                    cla: document.getElementById("cla").value,
+                    origem: document.getElementById("origem").value,
+                    poder: document.getElementById("poder").value,
+                    motivacao: document.getElementById("motivacao").value,
+                    escala: document.getElementById("escala").value
+                };
+                data[currentSection].push(personagem);
+            } else {
+                const title = document.getElementById("new-title").value;
+                const content = document.getElementById("new-content").value;
+                if(title && content) {
+                    data[currentSection].push({ title, content });
+                }
             }
+            saveData();
+            renderCards();
+            renderForm();
         }
 
         function deleteCard(index) {
@@ -127,6 +182,7 @@
                         data = importedData;
                         saveData();
                         alert('Dados importados com sucesso!');
+                        renderCards();
                     } catch (err) {
                         alert('Erro ao importar dados!');
                     }
@@ -136,7 +192,6 @@
             input.click();
         }
 
-        // Registra o service worker para PWA
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('service-worker.js');
         }
