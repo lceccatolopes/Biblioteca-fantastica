@@ -16,7 +16,7 @@
         .list-item { margin: 5px auto; padding: 10px; background: #333; border-radius: 5px; width: 60%; cursor: pointer; text-align: left; }
         .list-item:hover { background: #555; }
         .card img { max-width: 100%; border-radius: 5px; margin-bottom: 10px; }
-        .section-title { margin-top: 15px; font-weight: bold; color: #4CAF50; }
+        .section-title { margin-top: 15px; font-weight: bold; color: #4CAF50; text-align: center; }
     </style>
 </head>
 <body>
@@ -75,20 +75,26 @@
             const area = document.getElementById("form-area");
             area.innerHTML = "";
 
-            if(currentSection === "personagens") {
+            if (currentSection === "personagens") {
                 area.innerHTML = `
+                    <div class="section-title">Informações Básicas</div>
                     <input type="text" id="nome" placeholder="Nome Completo"><br>
-                    <input type="text" id="idade" placeholder="Idade"><br>
-                    <input type="text" id="profissao" placeholder="Profissão / Cargo"><br>
                     <input type="text" id="sexo" placeholder="Sexo"><br>
                     <input type="text" id="nacionalidade" placeholder="Nacionalidade"><br>
                     <input type="text" id="raca" placeholder="Raça"><br>
                     <input type="text" id="cla" placeholder="Clã"><br>
-                    <input type="text" id="afiliacao" placeholder="Afiliação"><br>
-                    <input type="text" id="status" placeholder="Status"><br>
+                    <input type="text" id="origem" placeholder="Origem"><br>
+                    <input type="text" id="profissao" placeholder="Profissão / Cargo"><br>
+                    <input type="text" id="status" placeholder="Status (Vivo, Morto, etc.)"><br>
+                    <input type="text" id="afiliacao" placeholder="Afiliação (Reino, Ordem, Facção...)"><br>
+                    <input type="text" id="idade" placeholder="Idade"><br>
+
+                    <div class="section-title">História e Relações</div>
                     <input type="text" id="personalidade" placeholder="Personalidade"><br>
-                    <input type="text" id="familia" placeholder="Pais / Filhos"><br>
+                    <input type="text" id="familia" placeholder="Filhos / Pais"><br>
                     <input type="text" id="titulos" placeholder="Títulos Honoríficos"><br>
+
+                    <div class="section-title">Combate e Poderes</div>
                     <input type="text" id="especialidade" placeholder="Especialidade"><br>
                     <input type="text" id="nivel" placeholder="Nível de Experiência"><br>
                     <input type="text" id="arma" placeholder="Arma Principal"><br>
@@ -96,25 +102,27 @@
                     <input type="text" id="poder" placeholder="Poder"><br>
                     <input type="text" id="motivacao" placeholder="Motivação"><br>
                     <input type="text" id="escala" placeholder="Escala de Poder"><br>
+
+                    <div class="section-title">Imagem</div>
                     <input type="file" id="imagem"><br>
                     <button onclick="addPersonagem()">Adicionar</button>
                 `;
             } 
-            else if(currentSection === "historias") {
+            else if (currentSection === "historias") {
                 area.innerHTML = `
                     <input type="text" id="titulo" placeholder="Título"><br>
                     <textarea id="conteudo" placeholder="Resumo da História"></textarea><br>
                     <button onclick="addItem()">Adicionar</button>
                 `;
             }
-            else if(currentSection === "clas") {
+            else if (currentSection === "clas") {
                 area.innerHTML = `
                     <input type="text" id="nome" placeholder="Nome do Clã"><br>
                     <textarea id="descricao" placeholder="Descrição e Características"></textarea><br>
                     <button onclick="addItem()">Adicionar</button>
                 `;
             }
-            else if(currentSection === "reinos") {
+            else if (currentSection === "reinos") {
                 area.innerHTML = `
                     <input type="text" id="nome" placeholder="Nome do Reino"><br>
                     <input type="text" id="lider" placeholder="Líder Atual"><br>
@@ -127,19 +135,19 @@
         function renderList() {
             const list = document.getElementById("list");
             list.innerHTML = "";
-            if(currentSection === "personagens") {
+            if (currentSection === "personagens") {
                 data.personagens.sort((a,b)=>a.nome.localeCompare(b.nome));
                 data.personagens.forEach((p,i)=> list.innerHTML += `<div class='list-item' onclick='openPersonagem(${i})'>${p.nome}</div>`);
             } 
-            else if(currentSection === "historias") {
+            else if (currentSection === "historias") {
                 data.historias.sort((a,b)=>a.titulo.localeCompare(b.titulo));
                 data.historias.forEach(h=> list.innerHTML += `<div class='list-item'>${h.titulo}</div>`);
             }
-            else if(currentSection === "clas") {
+            else if (currentSection === "clas") {
                 data.clas.sort((a,b)=>a.nome.localeCompare(b.nome));
                 data.clas.forEach(c=> list.innerHTML += `<div class='list-item'>${c.nome}</div>`);
             }
-            else if(currentSection === "reinos") {
+            else if (currentSection === "reinos") {
                 data.reinos.sort((a,b)=>a.nome.localeCompare(b.nome));
                 data.reinos.forEach(r=> list.innerHTML += `<div class='list-item'>${r.nome}</div>`);
             }
@@ -147,9 +155,9 @@
 
         function addPersonagem() {
             const p = {
-                nome: nome.value, idade: idade.value, profissao: profissao.value, sexo: sexo.value,
-                nacionalidade: nacionalidade.value, raca: raca.value, cla: cla.value, afiliacao: afiliacao.value,
-                status: status.value, personalidade: personalidade.value, familia: familia.value, titulos: titulos.value,
+                nome: nome.value, sexo: sexo.value, nacionalidade: nacionalidade.value, raca: raca.value, cla: cla.value,
+                origem: origem.value, profissao: profissao.value, status: status.value, afiliacao: afiliacao.value,
+                idade: idade.value, personalidade: personalidade.value, familia: familia.value, titulos: titulos.value,
                 especialidade: especialidade.value, nivel: nivel.value, arma: arma.value, elemento: elemento.value,
                 poder: poder.value, motivacao: motivacao.value, escala: escala.value,
                 imagem: imagem.files[0] ? URL.createObjectURL(imagem.files[0]) : ""
@@ -159,13 +167,13 @@
         }
 
         function addItem() {
-            if(currentSection==="historias"){
+            if (currentSection==="historias") {
                 data.historias.push({titulo: titulo.value, conteudo: conteudo.value});
             }
-            else if(currentSection==="clas"){
+            else if (currentSection==="clas") {
                 data.clas.push({nome: nome.value, descricao: descricao.value});
             }
-            else if(currentSection==="reinos"){
+            else if (currentSection==="reinos") {
                 data.reinos.push({nome: nome.value, lider: lider.value, historia: historia.value});
             }
             saveData(); renderList(); renderForm();
@@ -179,20 +187,20 @@
             document.getElementById("personagem-nome").innerText = p.nome;
 
             let detalhes = p.imagem ? `<img src="${p.imagem}"><br>` : "";
-            for(const k in p) if(k!=="imagem"&&p[k]) detalhes += `<p><strong>${k}:</strong> ${p[k]}</p>`;
+            for (const k in p) if (k!=="imagem"&&p[k]) detalhes += `<p><strong>${k}:</strong> ${p[k]}</p>`;
             document.getElementById("personagem-detalhes").innerHTML = detalhes;
 
             let form = "";
-            for(const k in p) if(k!=="imagem") form += `<input type="text" id="edit-${k}" value="${p[k]}" placeholder="${k}"><br>`;
+            for (const k in p) if (k!=="imagem") form += `<input type="text" id="edit-${k}" value="${p[k]}" placeholder="${k}"><br>`;
             form += `<input type="file" id="edit-imagem"><br>`;
             document.getElementById("edit-form").innerHTML = form;
         }
 
         function saveEdit() {
             const p = data.personagens[currentPersonagemIndex];
-            for(const k in p) if(k!=="imagem") p[k] = document.getElementById(`edit-${k}`).value;
+            for (const k in p) if (k!=="imagem") p[k] = document.getElementById(`edit-${k}`).value;
             const newImg = document.getElementById("edit-imagem").files[0];
-            if(newImg) p.imagem = URL.createObjectURL(newImg);
+            if (newImg) p.imagem = URL.createObjectURL(newImg);
             saveData(); openPersonagem(currentPersonagemIndex);
         }
 
