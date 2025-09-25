@@ -166,3 +166,69 @@
             for(const key in p) {
                 if(key !== "imagem") form += `<input type="text" id="edit-${key}" value="${p[key]}" placeholder="${key}"><br>`;
             }
+            form += `<input type="file" id="edit-imagem"><br>`;
+            document.getElementById("edit-form").innerHTML = form;
+        }
+
+        // Salva edição
+        function saveEdit() {
+            const p = data.personagens[currentPersonagemIndex];
+            for(const key in p) {
+                if(key !== "imagem") p[key] = document.getElementById(`edit-${key}`).value;
+            }
+            const newImg = document.getElementById("edit-imagem").files[0];
+            if(newImg) p.imagem = URL.createObjectURL(newImg);
+            saveData();
+            openPersonagem(currentPersonagemIndex);
+        }
+
+        // Exclui personagem
+        function deletePersonagem() {
+            data.personagens.splice(currentPersonagemIndex, 1);
+            saveData();
+            closePersonagem();
+            renderList();
+        }
+
+        // Fecha página personagem
+        function closePersonagem() {
+            document.getElementById("personagem-page").style.display = "none";
+            document.getElementById("content").style.display = "block";
+        }
+
+        // Volta ao menu
+        function goBack() {
+            document.getElementById("content").style.display = "none";
+            document.getElementById("menu").style.display = "block";
+        }
+
+        // Exporta/Importa
+        function exportData() {
+            const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'bibliotecaData.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importDataPrompt() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'application/json';
+            input.onchange = e => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = ev => {
+                    data = JSON.parse(ev.target.result);
+                    saveData();
+                    renderList();
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+    </script>
+</body>
+</html>
