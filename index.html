@@ -4,12 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Biblioteca Fantástica</title>
-    <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1e1e1e">
     <style>
         body { margin: 0; font-family: Arial, sans-serif; background-color: #1e1e1e; color: #fff; text-align: center; }
-        .menu-container, .content-container, .personagem-container, .edit-container { display: none; margin-top: 5%; }
-        input[type="text"], input[type="file"], textarea { padding: 8px; border-radius: 5px; border: none; width: 250px; margin-bottom: 8px; background: #fff; color:#000; }
+        .menu-container, .content-container, .personagem-container { display: none; margin-top: 5%; }
+        input[type="text"], input[type="file"] { padding: 8px; border-radius: 5px; border: none; width: 250px; margin-bottom: 8px; background: #fff; color: #000; }
         button { padding: 8px 15px; border: none; border-radius: 5px; background-color: #4CAF50; color: white; cursor: pointer; margin: 5px; }
         button:hover { background-color: #45a049; }
         .menu-item { margin: 15px; padding: 15px; display: inline-block; background: #333; border-radius: 10px; width: 150px; cursor: pointer; }
@@ -18,78 +17,75 @@
         .list-item:hover { background: #555; }
         .card { background: #333; margin: 10px auto; padding: 10px; border-radius: 5px; width: 60%; text-align: left; }
         .card img { max-width: 100%; border-radius: 5px; margin-bottom: 10px; }
-        .form-section { margin-top: 20px; }
         .section-title { margin-top: 15px; font-weight: bold; color: #4CAF50; }
     </style>
 </head>
 <body>
 
+    <!-- MENU PRINCIPAL -->
     <div class="menu-container" id="menu">
-        <h1>Bem-vindo à Biblioteca</h1>
+        <h1>Biblioteca Fantástica</h1>
         <div class="menu-item" onclick="openSection('personagens')">Personagens</div>
         <div class="menu-item" onclick="openSection('historias')">Histórias</div>
         <div class="menu-item" onclick="openSection('clas')">Clãs</div>
         <div class="menu-item" onclick="openSection('reinos')">Reinos</div>
-        <div class="menu-item" onclick="exportData()">Exportar Dados</div>
-        <div class="menu-item" onclick="importDataPrompt()">Importar Dados</div>
+        <div class="menu-item" onclick="exportData()">Exportar</div>
+        <div class="menu-item" onclick="importDataPrompt()">Importar</div>
     </div>
 
+    <!-- LISTA E FORM DE CRIAÇÃO -->
     <div class="content-container" id="content">
         <h2 id="section-title"></h2>
         <div id="list"></div>
-        <div id="form-area" class="form-section"></div>
+        <h3>Adicionar Novo Personagem</h3>
+        <div id="form-area"></div>
         <button onclick="goBack()">Voltar ao Menu</button>
     </div>
 
+    <!-- PÁGINA INDIVIDUAL DO PERSONAGEM -->
     <div class="personagem-container" id="personagem-page">
         <h2 id="personagem-nome"></h2>
         <div id="personagem-detalhes"></div>
-        <button onclick="editPersonagem()">Editar</button>
+        <h3>Editar Personagem</h3>
+        <div id="edit-form"></div>
+        <button onclick="saveEdit()">Salvar Alterações</button>
         <button onclick="deletePersonagem()">Excluir</button>
         <button onclick="closePersonagem()">Voltar</button>
     </div>
 
-    <div class="edit-container" id="edit-page">
-        <h2>Editar Personagem</h2>
-        <div id="edit-form"></div>
-        <button onclick="saveEdit()">Salvar Alterações</button>
-        <button onclick="cancelEdit()">Cancelar</button>
-    </div>
-
     <script>
+        // Inicialização
         document.getElementById("menu").style.display = "block";
-
         let currentSection = "";
         let currentPersonagemIndex = -1;
         let data = JSON.parse(localStorage.getItem('bibliotecaData')) || { personagens: [], historias: [], clas: [], reinos: [] };
 
         function saveData() { localStorage.setItem('bibliotecaData', JSON.stringify(data)); }
 
+        // Abre seção
         function openSection(section) {
             currentSection = section;
             document.getElementById("menu").style.display = "none";
             document.getElementById("content").style.display = "block";
             document.getElementById("personagem-page").style.display = "none";
-            document.getElementById("edit-page").style.display = "none";
             document.getElementById("section-title").innerText = section.charAt(0).toUpperCase() + section.slice(1);
-            renderList();
+            if(section === "personagens") renderList();
             renderForm();
         }
 
+        // Formulário de criação
         function renderForm() {
             if(currentSection !== "personagens") return;
-            const formArea = document.getElementById("form-area");
-            formArea.innerHTML = `
-                <h3>Adicionar Novo Personagem</h3>
+            document.getElementById("form-area").innerHTML = `
                 <input type="text" id="nome" placeholder="Nome Completo"><br>
                 <input type="text" id="idade" placeholder="Idade"><br>
+                <input type="text" id="profissao" placeholder="Profissão / Cargo"><br>
                 <input type="text" id="sexo" placeholder="Sexo"><br>
                 <input type="text" id="nacionalidade" placeholder="Nacionalidade"><br>
                 <input type="text" id="raca" placeholder="Raça"><br>
                 <input type="text" id="cla" placeholder="Clã"><br>
-                <input type="text" id="profissao" placeholder="Profissão / Cargo"><br>
-                <input type="text" id="status" placeholder="Status"><br>
                 <input type="text" id="afiliacao" placeholder="Afiliação"><br>
+                <input type="text" id="status" placeholder="Status"><br>
                 <input type="text" id="personalidade" placeholder="Personalidade"><br>
                 <input type="text" id="familia" placeholder="Pais / Filhos"><br>
                 <input type="text" id="titulos" placeholder="Títulos Honoríficos"><br>
@@ -105,37 +101,68 @@
             `;
         }
 
+        // Lista em ordem alfabética
         function renderList() {
             const listDiv = document.getElementById("list");
             listDiv.innerHTML = "";
-            if(currentSection === "personagens") {
-                data.personagens.sort((a,b) => a.nome.localeCompare(b.nome));
-                data.personagens.forEach((p, index) => {
-                    listDiv.innerHTML += `<div class='list-item' onclick='openPersonagem(${index})'>${p.nome}</div>`;
-                });
-            }
+            data.personagens.sort((a,b) => a.nome.localeCompare(b.nome));
+            data.personagens.forEach((p, i) => {
+                listDiv.innerHTML += `<div class='list-item' onclick='openPersonagem(${i})'>${p.nome}</div>`;
+            });
         }
 
+        // Cria personagem
         function addPersonagem() {
-            const personagem = getPersonagemForm();
-            data.personagens.push(personagem);
+            const p = getFormData();
+            data.personagens.push(p);
             saveData();
             renderList();
             renderForm();
         }
 
-        function getPersonagemForm() {
+        // Pega dados do formulário
+        function getFormData() {
             return {
                 nome: document.getElementById("nome").value,
                 idade: document.getElementById("idade").value,
+                profissao: document.getElementById("profissao").value,
                 sexo: document.getElementById("sexo").value,
                 nacionalidade: document.getElementById("nacionalidade").value,
                 raca: document.getElementById("raca").value,
                 cla: document.getElementById("cla").value,
-                profissao: document.getElementById("profissao").value,
-                status: document.getElementById("status").value,
                 afiliacao: document.getElementById("afiliacao").value,
+                status: document.getElementById("status").value,
                 personalidade: document.getElementById("personalidade").value,
                 familia: document.getElementById("familia").value,
                 titulos: document.getElementById("titulos").value,
                 especialidade: document.getElementById("especialidade").value,
+                nivel: document.getElementById("nivel").value,
+                arma: document.getElementById("arma").value,
+                elemento: document.getElementById("elemento").value,
+                poder: document.getElementById("poder").value,
+                motivacao: document.getElementById("motivacao").value,
+                escala: document.getElementById("escala").value,
+                imagem: document.getElementById("imagem").files[0] ? URL.createObjectURL(document.getElementById("imagem").files[0]) : ""
+            };
+        }
+
+        // Abre página individual
+        function openPersonagem(index) {
+            currentPersonagemIndex = index;
+            document.getElementById("content").style.display = "none";
+            document.getElementById("personagem-page").style.display = "block";
+
+            const p = data.personagens[index];
+            document.getElementById("personagem-nome").innerText = p.nome;
+
+            let detalhes = p.imagem ? `<img src="${p.imagem}"><br>` : "";
+            for(const key in p) {
+                if(key !== "imagem" && p[key]) detalhes += `<p><strong>${key}:</strong> ${p[key]}</p>`;
+            }
+            document.getElementById("personagem-detalhes").innerHTML = detalhes;
+
+            // Preenche formulário de edição
+            let form = "";
+            for(const key in p) {
+                if(key !== "imagem") form += `<input type="text" id="edit-${key}" value="${p[key]}" placeholder="${key}"><br>`;
+            }
