@@ -8,7 +8,7 @@
     <meta name="theme-color" content="#1e1e1e">
     <style>
         body { margin: 0; font-family: Arial, sans-serif; background-color: #1e1e1e; color: #fff; text-align: center; }
-        .menu-container, .content-container, .personagem-container { display: none; margin-top: 5%; }
+        .menu-container, .content-container, .personagem-container, .edit-container { display: none; margin-top: 5%; }
         input[type="text"], input[type="file"], textarea { padding: 8px; border-radius: 5px; border: none; width: 250px; margin-bottom: 8px; background: #fff; color:#000; }
         button { padding: 8px 15px; border: none; border-radius: 5px; background-color: #4CAF50; color: white; cursor: pointer; margin: 5px; }
         button:hover { background-color: #45a049; }
@@ -49,186 +49,93 @@
         <button onclick="closePersonagem()">Voltar</button>
     </div>
 
+    <div class="edit-container" id="edit-page">
+        <h2>Editar Personagem</h2>
+        <div id="edit-form"></div>
+        <button onclick="saveEdit()">Salvar Alterações</button>
+        <button onclick="cancelEdit()">Cancelar</button>
+    </div>
+
     <script>
-        // Exibe o menu inicial
         document.getElementById("menu").style.display = "block";
 
         let currentSection = "";
         let currentPersonagemIndex = -1;
-        let editingIndex = -1;
         let data = JSON.parse(localStorage.getItem('bibliotecaData')) || { personagens: [], historias: [], clas: [], reinos: [] };
 
         function saveData() { localStorage.setItem('bibliotecaData', JSON.stringify(data)); }
 
-        // Abre uma seção (Personagens, Histórias, etc.)
         function openSection(section) {
             currentSection = section;
             document.getElementById("menu").style.display = "none";
             document.getElementById("content").style.display = "block";
             document.getElementById("personagem-page").style.display = "none";
+            document.getElementById("edit-page").style.display = "none";
             document.getElementById("section-title").innerText = section.charAt(0).toUpperCase() + section.slice(1);
-
             renderList();
             renderForm();
         }
 
-        // Renderiza o formulário de criação
-        function renderForm(personagem = {}) {
+        function renderForm() {
+            if(currentSection !== "personagens") return;
             const formArea = document.getElementById("form-area");
-            formArea.innerHTML = "";
-
-            if(currentSection === "personagens") {
-                formArea.innerHTML = `
-                    <h3>${editingIndex >= 0 ? "Editar Personagem" : "Adicionar Novo Personagem"}</h3>
-                    <input type="text" id="nome" placeholder="Nome Completo" value="${personagem.nome || ""}"><br>
-                    <input type="file" id="imagem"><br>
-                    <button onclick="addPersonagem()">${editingIndex >= 0 ? "Salvar Alterações" : "Adicionar"}</button>
-                `;
-            } else {
-                formArea.innerHTML = `
-                    <h3>Adicionar Novo</h3>
-                    <input type="text" id="new-title" placeholder="Título"><br>
-                    <textarea id="new-content" rows="3" placeholder="Conteúdo"></textarea><br>
-                    <button onclick="addCard()">Adicionar</button>
-                `;
-            }
+            formArea.innerHTML = `
+                <h3>Adicionar Novo Personagem</h3>
+                <input type="text" id="nome" placeholder="Nome Completo"><br>
+                <input type="text" id="idade" placeholder="Idade"><br>
+                <input type="text" id="sexo" placeholder="Sexo"><br>
+                <input type="text" id="nacionalidade" placeholder="Nacionalidade"><br>
+                <input type="text" id="raca" placeholder="Raça"><br>
+                <input type="text" id="cla" placeholder="Clã"><br>
+                <input type="text" id="profissao" placeholder="Profissão / Cargo"><br>
+                <input type="text" id="status" placeholder="Status"><br>
+                <input type="text" id="afiliacao" placeholder="Afiliação"><br>
+                <input type="text" id="personalidade" placeholder="Personalidade"><br>
+                <input type="text" id="familia" placeholder="Pais / Filhos"><br>
+                <input type="text" id="titulos" placeholder="Títulos Honoríficos"><br>
+                <input type="text" id="especialidade" placeholder="Especialidade"><br>
+                <input type="text" id="nivel" placeholder="Nível de Experiência"><br>
+                <input type="text" id="arma" placeholder="Arma Principal"><br>
+                <input type="text" id="elemento" placeholder="Elemento / Afinidade"><br>
+                <input type="text" id="poder" placeholder="Poder"><br>
+                <input type="text" id="motivacao" placeholder="Motivação"><br>
+                <input type="text" id="escala" placeholder="Escala de Poder"><br>
+                <input type="file" id="imagem"><br>
+                <button onclick="addPersonagem()">Adicionar</button>
+            `;
         }
 
-        // Renderiza a lista em ordem alfabética
         function renderList() {
             const listDiv = document.getElementById("list");
             listDiv.innerHTML = "";
-
             if(currentSection === "personagens") {
                 data.personagens.sort((a,b) => a.nome.localeCompare(b.nome));
-                data.personagens.forEach((personagem, index) => {
-                    listDiv.innerHTML += `<div class='list-item' onclick='openPersonagem(${index})'>${personagem.nome}</div>`;
-                });
-            } else if(currentSection && data[currentSection]) {
-                data[currentSection].forEach((item, index) => {
-                    listDiv.innerHTML += `<div class='list-item'>${item.title || "Sem título"}</div>`;
+                data.personagens.forEach((p, index) => {
+                    listDiv.innerHTML += `<div class='list-item' onclick='openPersonagem(${index})'>${p.nome}</div>`;
                 });
             }
         }
 
-        // Adiciona um personagem
         function addPersonagem() {
-            const nome = document.getElementById("nome").value;
-            const imagemInput = document.getElementById("imagem");
-            let imagemBase64 = "";
-
-            if(imagemInput.files.length > 0) {
-                const file = imagemInput.files[0];
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    imagemBase64 = e.target.result;
-                    savePersonagem(nome, imagemBase64);
-                };
-                reader.readAsDataURL(file);
-            } else {
-                savePersonagem(nome, "");
-            }
-        }
-
-        // Salva o personagem
-        function savePersonagem(nome, imagem) {
-            const personagem = { nome: nome, imagem: imagem };
-
-            if(editingIndex >= 0) {
-                data.personagens[editingIndex] = personagem;
-                editingIndex = -1;
-            } else {
-                data.personagens.push(personagem);
-            }
-
+            const personagem = getPersonagemForm();
+            data.personagens.push(personagem);
             saveData();
             renderList();
             renderForm();
         }
 
-        // Abre a página individual do personagem
-        function openPersonagem(index) {
-            currentPersonagemIndex = index;
-            document.getElementById("content").style.display = "none";
-            document.getElementById("personagem-page").style.display = "block";
-
-            const personagem = data.personagens[index];
-            document.getElementById("personagem-nome").innerText = personagem.nome;
-
-            const detalhesDiv = document.getElementById("personagem-detalhes");
-            detalhesDiv.innerHTML = personagem.imagem ? `<img src="${personagem.imagem}" alt="Imagem do personagem"><br>` : "";
-            detalhesDiv.innerHTML += `<p><strong>Nome:</strong> ${personagem.nome}</p>`;
-        }
-
-        // Edita o personagem
-        function editPersonagem() {
-            editingIndex = currentPersonagemIndex;
-            document.getElementById("personagem-page").style.display = "none";
-            document.getElementById("content").style.display = "block";
-            renderForm(data.personagens[currentPersonagemIndex]);
-        }
-
-        // Exclui o personagem
-        function deletePersonagem() {
-            data.personagens.splice(currentPersonagemIndex, 1);
-            saveData();
-            closePersonagem();
-            renderList();
-        }
-
-        // Fecha a página do personagem
-        function closePersonagem() {
-            document.getElementById("personagem-page").style.display = "none";
-            document.getElementById("content").style.display = "block";
-        }
-
-        // Volta para o menu principal
-        function goBack() {
-            document.getElementById("content").style.display = "none";
-            document.getElementById("personagem-page").style.display = "none";
-            document.getElementById("menu").style.display = "block";
-        }
-
-        // Exporta os dados
-        function exportData() {
-            const dataStr = JSON.stringify(data);
-            const blob = new Blob([dataStr], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'bibliotecaData.json';
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-
-        // Importa os dados
-        function importDataPrompt() {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'application/json';
-            input.onchange = e => {
-                const file = e.target.files[0];
-                const reader = new FileReader();
-                reader.onload = event => {
-                    try {
-                        const importedData = JSON.parse(event.target.result);
-                        data = importedData;
-                        saveData();
-                        alert('Dados importados com sucesso!');
-                        renderList();
-                    } catch (err) {
-                        alert('Erro ao importar dados!');
-                    }
-                };
-                reader.readAsText(file);
-            };
-            input.click();
-        }
-
-        // Service worker para PWA
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('service-worker.js');
-        }
-    </script>
-</body>
-</html>
+        function getPersonagemForm() {
+            return {
+                nome: document.getElementById("nome").value,
+                idade: document.getElementById("idade").value,
+                sexo: document.getElementById("sexo").value,
+                nacionalidade: document.getElementById("nacionalidade").value,
+                raca: document.getElementById("raca").value,
+                cla: document.getElementById("cla").value,
+                profissao: document.getElementById("profissao").value,
+                status: document.getElementById("status").value,
+                afiliacao: document.getElementById("afiliacao").value,
+                personalidade: document.getElementById("personalidade").value,
+                familia: document.getElementById("familia").value,
+                titulos: document.getElementById("titulos").value,
+                especialidade: document.getElementById("especialidade").value,
