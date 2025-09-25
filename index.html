@@ -8,12 +8,14 @@
     <meta name="theme-color" content="#1e1e1e">
     <style>
         body { margin: 0; font-family: Arial, sans-serif; background-color: #1e1e1e; color: #fff; text-align: center; }
-        .menu-container, .content-container { display: none; margin-top: 5%; }
+        .menu-container, .content-container, .personagem-container { display: none; margin-top: 5%; }
         input[type="text"], input[type="file"], textarea { padding: 8px; border-radius: 5px; border: none; width: 250px; margin-bottom: 8px; background: #fff; color:#000; }
         button { padding: 8px 15px; border: none; border-radius: 5px; background-color: #4CAF50; color: white; cursor: pointer; margin: 5px; }
         button:hover { background-color: #45a049; }
         .menu-item { margin: 15px; padding: 15px; display: inline-block; background: #333; border-radius: 10px; width: 150px; cursor: pointer; }
         .menu-item:hover { background: #555; }
+        .list-item { margin: 5px auto; padding: 10px; background: #333; border-radius: 5px; width: 60%; cursor: pointer; text-align: left; }
+        .list-item:hover { background: #555; }
         .card { background: #333; margin: 10px auto; padding: 10px; border-radius: 5px; width: 60%; text-align: left; }
         .card img { max-width: 100%; border-radius: 5px; margin-bottom: 10px; }
         .form-section { margin-top: 20px; }
@@ -34,15 +36,24 @@
 
     <div class="content-container" id="content">
         <h2 id="section-title"></h2>
-        <div id="cards"></div>
+        <div id="list"></div>
         <div id="form-area" class="form-section"></div>
         <button onclick="goBack()">Voltar ao Menu</button>
+    </div>
+
+    <div class="personagem-container" id="personagem-page">
+        <h2 id="personagem-nome"></h2>
+        <div id="personagem-detalhes"></div>
+        <button onclick="editPersonagem()">Editar</button>
+        <button onclick="deletePersonagem()">Excluir</button>
+        <button onclick="closePersonagem()">Voltar</button>
     </div>
 
     <script>
         document.getElementById("menu").style.display = "block";
 
         let currentSection = "";
+        let currentPersonagemIndex = -1;
         let editingIndex = -1;
         let data = JSON.parse(localStorage.getItem('bibliotecaData')) || { personagens: [], historias: [], clas: [], reinos: [] };
 
@@ -52,8 +63,9 @@
             currentSection = section;
             document.getElementById("menu").style.display = "none";
             document.getElementById("content").style.display = "block";
+            document.getElementById("personagem-page").style.display = "none";
             document.getElementById("section-title").innerText = section.charAt(0).toUpperCase() + section.slice(1);
-            renderCards();
+            renderList();
             renderForm();
         }
 
@@ -64,35 +76,9 @@
             if(currentSection === "personagens") {
                 formArea.innerHTML = `
                     <h3>${editingIndex >= 0 ? "Editar Personagem" : "Adicionar Novo Personagem"}</h3>
-
-                    <div class="section-title">Informações Básicas</div>
                     <input type="text" id="nome" placeholder="Nome Completo" value="${personagem.nome || ""}"><br>
-                    <input type="text" id="sexo" placeholder="Sexo" value="${personagem.sexo || ""}"><br>
-                    <input type="text" id="idade" placeholder="Idade" value="${personagem.idade || ""}"><br>
-                    <input type="text" id="nacionalidade" placeholder="Nacionalidade" value="${personagem.nacionalidade || ""}"><br>
-                    <input type="text" id="raca" placeholder="Raça" value="${personagem.raca || ""}"><br>
-                    <input type="text" id="cla" placeholder="Clã" value="${personagem.cla || ""}"><br>
-                    <input type="text" id="profissao" placeholder="Profissão / Cargo" value="${personagem.profissao || ""}"><br>
-                    <input type="text" id="status" placeholder="Status" value="${personagem.status || ""}"><br>
-                    <input type="text" id="afiliacao" placeholder="Afiliação" value="${personagem.afiliacao || ""}"><br>
-
-                    <div class="section-title">História e Relações</div>
-                    <input type="text" id="personalidade" placeholder="Personalidade" value="${personagem.personalidade || ""}"><br>
-                    <input type="text" id="familia" placeholder="Pais / Filhos" value="${personagem.familia || ""}"><br>
-                    <input type="text" id="titulos" placeholder="Títulos Honoríficos" value="${personagem.titulos || ""}"><br>
-
-                    <div class="section-title">Combate e Poderes</div>
-                    <input type="text" id="especialidade" placeholder="Especialidade" value="${personagem.especialidade || ""}"><br>
-                    <input type="text" id="nivel" placeholder="Nível de Experiência" value="${personagem.nivel || ""}"><br>
-                    <input type="text" id="arma" placeholder="Arma Principal" value="${personagem.arma || ""}"><br>
-                    <input type="text" id="elemento" placeholder="Elemento / Afinidade" value="${personagem.elemento || ""}"><br>
-                    <input type="text" id="poder" placeholder="Poder" value="${personagem.poder || ""}"><br>
-                    <input type="text" id="motivacao" placeholder="Motivação" value="${personagem.motivacao || ""}"><br>
-                    <input type="text" id="escala" placeholder="Escala de Poder" value="${personagem.escala || ""}"><br>
-
-                    <div class="section-title">Imagem</div>
                     <input type="file" id="imagem"><br>
-                    <button onclick="addCard()">${editingIndex >= 0 ? "Salvar Alterações" : "Adicionar"}</button>
+                    <button onclick="addPersonagem()">${editingIndex >= 0 ? "Salvar Alterações" : "Adicionar"}</button>
                 `;
             } else {
                 formArea.innerHTML = `
@@ -104,164 +90,22 @@
             }
         }
 
-        function renderCards() {
-            const cardsDiv = document.getElementById("cards");
-            cardsDiv.innerHTML = "";
-            data[currentSection].forEach((item, index) => {
-                if(currentSection === "personagens") {
-                    cardsDiv.innerHTML += `
-                        <div class='card'>
-                            ${item.imagem ? `<img src="${item.imagem}" alt="Imagem do personagem">` : ""}
-                            <div class="section-title">Informações Básicas</div>
-                            <strong>Nome:</strong> ${item.nome}<br>
-                            <strong>Sexo:</strong> ${item.sexo}<br>
-                            <strong>Idade:</strong> ${item.idade}<br>
-                            <strong>Nacionalidade:</strong> ${item.nacionalidade}<br>
-                            <strong>Raça:</strong> ${item.raca}<br>
-                            <strong>Clã:</strong> ${item.cla}<br>
-                            <strong>Profissão / Cargo:</strong> ${item.profissao}<br>
-                            <strong>Status:</strong> ${item.status}<br>
-                            <strong>Afiliação:</strong> ${item.afiliacao}<br>
+        function renderList() {
+            const listDiv = document.getElementById("list");
+            listDiv.innerHTML = "";
 
-                            <div class="section-title">História e Relações</div>
-                            <strong>Personalidade:</strong> ${item.personalidade}<br>
-                            <strong>Pais / Filhos:</strong> ${item.familia}<br>
-                            <strong>Títulos Honoríficos:</strong> ${item.titulos}<br>
-
-                            <div class="section-title">Combate e Poderes</div>
-                            <strong>Especialidade:</strong> ${item.especialidade}<br>
-                            <strong>Nível de Experiência:</strong> ${item.nivel}<br>
-                            <strong>Arma Principal:</strong> ${item.arma}<br>
-                            <strong>Elemento / Afinidade:</strong> ${item.elemento}<br>
-                            <strong>Poder:</strong> ${item.poder}<br>
-                            <strong>Motivação:</strong> ${item.motivacao}<br>
-                            <strong>Escala de Poder:</strong> ${item.escala}<br>
-                            <button onclick='editCard(${index})'>Editar</button>
-                            <button onclick='deleteCard(${index})'>Excluir</button>
-                        </div>`;
-                } else {
-                    cardsDiv.innerHTML += `<div class='card'><h4>${item.title}</h4><p>${item.content}</p><button onclick='deleteCard(${index})'>Excluir</button></div>`;
-                }
-            });
-        }
-
-        function addCard() {
             if(currentSection === "personagens") {
-                const imagemInput = document.getElementById("imagem");
-                let imagemBase64 = "";
-
-                if(imagemInput.files.length > 0) {
-                    const file = imagemInput.files[0];
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        imagemBase64 = e.target.result;
-                        savePersonagem(imagemBase64);
-                    };
-                    reader.readAsDataURL(file);
-                } else {
-                    savePersonagem("");
-                }
+                data.personagens.sort((a,b) => a.nome.localeCompare(b.nome));
+                data.personagens.forEach((personagem, index) => {
+                    listDiv.innerHTML += `<div class='list-item' onclick='openPersonagem(${index})'>${personagem.nome}</div>`;
+                });
             } else {
-                const title = document.getElementById("new-title").value;
-                const content = document.getElementById("new-content").value;
-                if(title && content) {
-                    data[currentSection].push({ title, content });
-                    saveData();
-                    renderCards();
-                    renderForm();
-                }
+                data[currentSection].forEach((item, index) => {
+                    listDiv.innerHTML += `<div class='list-item'>${item.title}</div>`;
+                });
             }
         }
 
-        function savePersonagem(imagem) {
-            const personagem = {
-                nome: document.getElementById("nome").value,
-                sexo: document.getElementById("sexo").value,
-                idade: document.getElementById("idade").value,
-                nacionalidade: document.getElementById("nacionalidade").value,
-                raca: document.getElementById("raca").value,
-                cla: document.getElementById("cla").value,
-                profissao: document.getElementById("profissao").value,
-                status: document.getElementById("status").value,
-                afiliacao: document.getElementById("afiliacao").value,
-                personalidade: document.getElementById("personalidade").value,
-                familia: document.getElementById("familia").value,
-                titulos: document.getElementById("titulos").value,
-                especialidade: document.getElementById("especialidade").value,
-                nivel: document.getElementById("nivel").value,
-                arma: document.getElementById("arma").value,
-                elemento: document.getElementById("elemento").value,
-                poder: document.getElementById("poder").value,
-                motivacao: document.getElementById("motivacao").value,
-                escala: document.getElementById("escala").value,
-                imagem: imagem
-            };
-
-            if(editingIndex >= 0) {
-                data[currentSection][editingIndex] = personagem;
-                editingIndex = -1;
-            } else {
-                data[currentSection].push(personagem);
-            }
-
-            saveData();
-            renderCards();
-            renderForm();
-        }
-
-        function editCard(index) {
-            editingIndex = index;
-            renderForm(data[currentSection][index]);
-        }
-
-        function deleteCard(index) {
-            data[currentSection].splice(index, 1);
-            saveData();
-            renderCards();
-        }
-
-        function goBack() {
-            document.getElementById("content").style.display = "none";
-            document.getElementById("menu").style.display = "block";
-        }
-
-        function exportData() {
-            const dataStr = JSON.stringify(data);
-            const blob = new Blob([dataStr], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'bibliotecaData.json';
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-
-        function importDataPrompt() {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'application/json';
-            input.onchange = e => {
-                const file = e.target.files[0];
-                const reader = new FileReader();
-                reader.onload = event => {
-                    try {
-                        const importedData = JSON.parse(event.target.result);
-                        data = importedData;
-                        saveData();
-                        alert('Dados importados com sucesso!');
-                        renderCards();
-                    } catch (err) {
-                        alert('Erro ao importar dados!');
-                    }
-                };
-                reader.readAsText(file);
-            };
-            input.click();
-        }
-
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('service-worker.js');
-        }
-    </script>
-</body>
-</html>
+        function addPersonagem() {
+            const nome = document.getElementById("nome").value;
+            const imagemInput = document.getElementBy
