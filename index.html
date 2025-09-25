@@ -8,14 +8,13 @@
     <style>
         body { margin: 0; font-family: Arial, sans-serif; background-color: #1e1e1e; color: #fff; text-align: center; }
         .menu-container, .content-container, .personagem-container { display: none; margin-top: 5%; }
-        input[type="text"], input[type="file"] { padding: 8px; border-radius: 5px; border: none; width: 250px; margin-bottom: 8px; background: #fff; color: #000; }
+        input[type="text"], input[type="file"], textarea { padding: 8px; border-radius: 5px; border: none; width: 250px; margin-bottom: 8px; background: #fff; color: #000; }
         button { padding: 8px 15px; border: none; border-radius: 5px; background-color: #4CAF50; color: white; cursor: pointer; margin: 5px; }
         button:hover { background-color: #45a049; }
         .menu-item { margin: 15px; padding: 15px; display: inline-block; background: #333; border-radius: 10px; width: 150px; cursor: pointer; }
         .menu-item:hover { background: #555; }
         .list-item { margin: 5px auto; padding: 10px; background: #333; border-radius: 5px; width: 60%; cursor: pointer; text-align: left; }
         .list-item:hover { background: #555; }
-        .card { background: #333; margin: 10px auto; padding: 10px; border-radius: 5px; width: 60%; text-align: left; }
         .card img { max-width: 100%; border-radius: 5px; margin-bottom: 10px; }
         .section-title { margin-top: 15px; font-weight: bold; color: #4CAF50; }
     </style>
@@ -37,7 +36,7 @@
     <div class="content-container" id="content">
         <h2 id="section-title"></h2>
         <div id="list"></div>
-        <h3>Adicionar Novo Personagem</h3>
+        <h3 id="form-title"></h3>
         <div id="form-area"></div>
         <button onclick="goBack()">Voltar ao Menu</button>
     </div>
@@ -54,7 +53,6 @@
     </div>
 
     <script>
-        // Inicialização
         document.getElementById("menu").style.display = "block";
         let currentSection = "";
         let currentPersonagemIndex = -1;
@@ -62,169 +60,171 @@
 
         function saveData() { localStorage.setItem('bibliotecaData', JSON.stringify(data)); }
 
-        // Abre seção
         function openSection(section) {
             currentSection = section;
             document.getElementById("menu").style.display = "none";
             document.getElementById("content").style.display = "block";
             document.getElementById("personagem-page").style.display = "none";
             document.getElementById("section-title").innerText = section.charAt(0).toUpperCase() + section.slice(1);
-            if(section === "personagens") renderList();
-            renderForm();
-        }
-
-        // Formulário de criação
-        function renderForm() {
-            if(currentSection !== "personagens") return;
-            document.getElementById("form-area").innerHTML = `
-                <input type="text" id="nome" placeholder="Nome Completo"><br>
-                <input type="text" id="idade" placeholder="Idade"><br>
-                <input type="text" id="profissao" placeholder="Profissão / Cargo"><br>
-                <input type="text" id="sexo" placeholder="Sexo"><br>
-                <input type="text" id="nacionalidade" placeholder="Nacionalidade"><br>
-                <input type="text" id="raca" placeholder="Raça"><br>
-                <input type="text" id="cla" placeholder="Clã"><br>
-                <input type="text" id="afiliacao" placeholder="Afiliação"><br>
-                <input type="text" id="status" placeholder="Status"><br>
-                <input type="text" id="personalidade" placeholder="Personalidade"><br>
-                <input type="text" id="familia" placeholder="Pais / Filhos"><br>
-                <input type="text" id="titulos" placeholder="Títulos Honoríficos"><br>
-                <input type="text" id="especialidade" placeholder="Especialidade"><br>
-                <input type="text" id="nivel" placeholder="Nível de Experiência"><br>
-                <input type="text" id="arma" placeholder="Arma Principal"><br>
-                <input type="text" id="elemento" placeholder="Elemento / Afinidade"><br>
-                <input type="text" id="poder" placeholder="Poder"><br>
-                <input type="text" id="motivacao" placeholder="Motivação"><br>
-                <input type="text" id="escala" placeholder="Escala de Poder"><br>
-                <input type="file" id="imagem"><br>
-                <button onclick="addPersonagem()">Adicionar</button>
-            `;
-        }
-
-        // Lista em ordem alfabética
-        function renderList() {
-            const listDiv = document.getElementById("list");
-            listDiv.innerHTML = "";
-            data.personagens.sort((a,b) => a.nome.localeCompare(b.nome));
-            data.personagens.forEach((p, i) => {
-                listDiv.innerHTML += `<div class='list-item' onclick='openPersonagem(${i})'>${p.nome}</div>`;
-            });
-        }
-
-        // Cria personagem
-        function addPersonagem() {
-            const p = getFormData();
-            data.personagens.push(p);
-            saveData();
+            document.getElementById("form-title").innerText = "Adicionar Novo " + section.slice(0, -1);
             renderList();
             renderForm();
         }
 
-        // Pega dados do formulário
-        function getFormData() {
-            return {
-                nome: document.getElementById("nome").value,
-                idade: document.getElementById("idade").value,
-                profissao: document.getElementById("profissao").value,
-                sexo: document.getElementById("sexo").value,
-                nacionalidade: document.getElementById("nacionalidade").value,
-                raca: document.getElementById("raca").value,
-                cla: document.getElementById("cla").value,
-                afiliacao: document.getElementById("afiliacao").value,
-                status: document.getElementById("status").value,
-                personalidade: document.getElementById("personalidade").value,
-                familia: document.getElementById("familia").value,
-                titulos: document.getElementById("titulos").value,
-                especialidade: document.getElementById("especialidade").value,
-                nivel: document.getElementById("nivel").value,
-                arma: document.getElementById("arma").value,
-                elemento: document.getElementById("elemento").value,
-                poder: document.getElementById("poder").value,
-                motivacao: document.getElementById("motivacao").value,
-                escala: document.getElementById("escala").value,
-                imagem: document.getElementById("imagem").files[0] ? URL.createObjectURL(document.getElementById("imagem").files[0]) : ""
-            };
+        function renderForm() {
+            const area = document.getElementById("form-area");
+            area.innerHTML = "";
+
+            if(currentSection === "personagens") {
+                area.innerHTML = `
+                    <input type="text" id="nome" placeholder="Nome Completo"><br>
+                    <input type="text" id="idade" placeholder="Idade"><br>
+                    <input type="text" id="profissao" placeholder="Profissão / Cargo"><br>
+                    <input type="text" id="sexo" placeholder="Sexo"><br>
+                    <input type="text" id="nacionalidade" placeholder="Nacionalidade"><br>
+                    <input type="text" id="raca" placeholder="Raça"><br>
+                    <input type="text" id="cla" placeholder="Clã"><br>
+                    <input type="text" id="afiliacao" placeholder="Afiliação"><br>
+                    <input type="text" id="status" placeholder="Status"><br>
+                    <input type="text" id="personalidade" placeholder="Personalidade"><br>
+                    <input type="text" id="familia" placeholder="Pais / Filhos"><br>
+                    <input type="text" id="titulos" placeholder="Títulos Honoríficos"><br>
+                    <input type="text" id="especialidade" placeholder="Especialidade"><br>
+                    <input type="text" id="nivel" placeholder="Nível de Experiência"><br>
+                    <input type="text" id="arma" placeholder="Arma Principal"><br>
+                    <input type="text" id="elemento" placeholder="Elemento / Afinidade"><br>
+                    <input type="text" id="poder" placeholder="Poder"><br>
+                    <input type="text" id="motivacao" placeholder="Motivação"><br>
+                    <input type="text" id="escala" placeholder="Escala de Poder"><br>
+                    <input type="file" id="imagem"><br>
+                    <button onclick="addPersonagem()">Adicionar</button>
+                `;
+            } 
+            else if(currentSection === "historias") {
+                area.innerHTML = `
+                    <input type="text" id="titulo" placeholder="Título"><br>
+                    <textarea id="conteudo" placeholder="Resumo da História"></textarea><br>
+                    <button onclick="addItem()">Adicionar</button>
+                `;
+            }
+            else if(currentSection === "clas") {
+                area.innerHTML = `
+                    <input type="text" id="nome" placeholder="Nome do Clã"><br>
+                    <textarea id="descricao" placeholder="Descrição e Características"></textarea><br>
+                    <button onclick="addItem()">Adicionar</button>
+                `;
+            }
+            else if(currentSection === "reinos") {
+                area.innerHTML = `
+                    <input type="text" id="nome" placeholder="Nome do Reino"><br>
+                    <input type="text" id="lider" placeholder="Líder Atual"><br>
+                    <textarea id="historia" placeholder="História Resumida"></textarea><br>
+                    <button onclick="addItem()">Adicionar</button>
+                `;
+            }
         }
 
-        // Abre página individual
+        function renderList() {
+            const list = document.getElementById("list");
+            list.innerHTML = "";
+            if(currentSection === "personagens") {
+                data.personagens.sort((a,b)=>a.nome.localeCompare(b.nome));
+                data.personagens.forEach((p,i)=> list.innerHTML += `<div class='list-item' onclick='openPersonagem(${i})'>${p.nome}</div>`);
+            } 
+            else if(currentSection === "historias") {
+                data.historias.sort((a,b)=>a.titulo.localeCompare(b.titulo));
+                data.historias.forEach(h=> list.innerHTML += `<div class='list-item'>${h.titulo}</div>`);
+            }
+            else if(currentSection === "clas") {
+                data.clas.sort((a,b)=>a.nome.localeCompare(b.nome));
+                data.clas.forEach(c=> list.innerHTML += `<div class='list-item'>${c.nome}</div>`);
+            }
+            else if(currentSection === "reinos") {
+                data.reinos.sort((a,b)=>a.nome.localeCompare(b.nome));
+                data.reinos.forEach(r=> list.innerHTML += `<div class='list-item'>${r.nome}</div>`);
+            }
+        }
+
+        function addPersonagem() {
+            const p = {
+                nome: nome.value, idade: idade.value, profissao: profissao.value, sexo: sexo.value,
+                nacionalidade: nacionalidade.value, raca: raca.value, cla: cla.value, afiliacao: afiliacao.value,
+                status: status.value, personalidade: personalidade.value, familia: familia.value, titulos: titulos.value,
+                especialidade: especialidade.value, nivel: nivel.value, arma: arma.value, elemento: elemento.value,
+                poder: poder.value, motivacao: motivacao.value, escala: escala.value,
+                imagem: imagem.files[0] ? URL.createObjectURL(imagem.files[0]) : ""
+            };
+            data.personagens.push(p);
+            saveData(); renderList(); renderForm();
+        }
+
+        function addItem() {
+            if(currentSection==="historias"){
+                data.historias.push({titulo: titulo.value, conteudo: conteudo.value});
+            }
+            else if(currentSection==="clas"){
+                data.clas.push({nome: nome.value, descricao: descricao.value});
+            }
+            else if(currentSection==="reinos"){
+                data.reinos.push({nome: nome.value, lider: lider.value, historia: historia.value});
+            }
+            saveData(); renderList(); renderForm();
+        }
+
         function openPersonagem(index) {
             currentPersonagemIndex = index;
             document.getElementById("content").style.display = "none";
             document.getElementById("personagem-page").style.display = "block";
-
             const p = data.personagens[index];
             document.getElementById("personagem-nome").innerText = p.nome;
 
             let detalhes = p.imagem ? `<img src="${p.imagem}"><br>` : "";
-            for(const key in p) {
-                if(key !== "imagem" && p[key]) detalhes += `<p><strong>${key}:</strong> ${p[key]}</p>`;
-            }
+            for(const k in p) if(k!=="imagem"&&p[k]) detalhes += `<p><strong>${k}:</strong> ${p[k]}</p>`;
             document.getElementById("personagem-detalhes").innerHTML = detalhes;
 
-            // Preenche formulário de edição
             let form = "";
-            for(const key in p) {
-                if(key !== "imagem") form += `<input type="text" id="edit-${key}" value="${p[key]}" placeholder="${key}"><br>`;
-            }
+            for(const k in p) if(k!=="imagem") form += `<input type="text" id="edit-${k}" value="${p[k]}" placeholder="${k}"><br>`;
             form += `<input type="file" id="edit-imagem"><br>`;
             document.getElementById("edit-form").innerHTML = form;
         }
 
-        // Salva edição
         function saveEdit() {
             const p = data.personagens[currentPersonagemIndex];
-            for(const key in p) {
-                if(key !== "imagem") p[key] = document.getElementById(`edit-${key}`).value;
-            }
+            for(const k in p) if(k!=="imagem") p[k] = document.getElementById(`edit-${k}`).value;
             const newImg = document.getElementById("edit-imagem").files[0];
             if(newImg) p.imagem = URL.createObjectURL(newImg);
-            saveData();
-            openPersonagem(currentPersonagemIndex);
+            saveData(); openPersonagem(currentPersonagemIndex);
         }
 
-        // Exclui personagem
         function deletePersonagem() {
-            data.personagens.splice(currentPersonagemIndex, 1);
-            saveData();
-            closePersonagem();
-            renderList();
+            data.personagens.splice(currentPersonagemIndex,1);
+            saveData(); closePersonagem(); renderList();
         }
 
-        // Fecha página personagem
         function closePersonagem() {
             document.getElementById("personagem-page").style.display = "none";
             document.getElementById("content").style.display = "block";
         }
 
-        // Volta ao menu
         function goBack() {
             document.getElementById("content").style.display = "none";
+            document.getElementById("personagem-page").style.display = "none";
             document.getElementById("menu").style.display = "block";
         }
 
-        // Exporta/Importa
         function exportData() {
             const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.href = url;
-            a.download = 'bibliotecaData.json';
-            a.click();
+            a.href = url; a.download = 'bibliotecaData.json'; a.click();
             URL.revokeObjectURL(url);
         }
 
         function importDataPrompt() {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'application/json';
+            const input = document.createElement('input'); input.type = 'file'; input.accept = 'application/json';
             input.onchange = e => {
-                const file = e.target.files[0];
-                const reader = new FileReader();
-                reader.onload = ev => {
-                    data = JSON.parse(ev.target.result);
-                    saveData();
-                    renderList();
-                };
+                const file = e.target.files[0]; const reader = new FileReader();
+                reader.onload = ev => { data = JSON.parse(ev.target.result); saveData(); renderList(); };
                 reader.readAsText(file);
             };
             input.click();
