@@ -50,6 +50,7 @@
     </div>
 
     <script>
+        // Exibe o menu inicial
         document.getElementById("menu").style.display = "block";
 
         let currentSection = "";
@@ -59,16 +60,19 @@
 
         function saveData() { localStorage.setItem('bibliotecaData', JSON.stringify(data)); }
 
+        // Abre uma seção (Personagens, Histórias, etc.)
         function openSection(section) {
             currentSection = section;
             document.getElementById("menu").style.display = "none";
             document.getElementById("content").style.display = "block";
             document.getElementById("personagem-page").style.display = "none";
             document.getElementById("section-title").innerText = section.charAt(0).toUpperCase() + section.slice(1);
+
             renderList();
             renderForm();
         }
 
+        // Renderiza o formulário de criação
         function renderForm(personagem = {}) {
             const formArea = document.getElementById("form-area");
             formArea.innerHTML = "";
@@ -90,6 +94,7 @@
             }
         }
 
+        // Renderiza a lista em ordem alfabética
         function renderList() {
             const listDiv = document.getElementById("list");
             listDiv.innerHTML = "";
@@ -99,13 +104,131 @@
                 data.personagens.forEach((personagem, index) => {
                     listDiv.innerHTML += `<div class='list-item' onclick='openPersonagem(${index})'>${personagem.nome}</div>`;
                 });
-            } else {
+            } else if(currentSection && data[currentSection]) {
                 data[currentSection].forEach((item, index) => {
-                    listDiv.innerHTML += `<div class='list-item'>${item.title}</div>`;
+                    listDiv.innerHTML += `<div class='list-item'>${item.title || "Sem título"}</div>`;
                 });
             }
         }
 
+        // Adiciona um personagem
         function addPersonagem() {
             const nome = document.getElementById("nome").value;
-            const imagemInput = document.getElementBy
+            const imagemInput = document.getElementById("imagem");
+            let imagemBase64 = "";
+
+            if(imagemInput.files.length > 0) {
+                const file = imagemInput.files[0];
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imagemBase64 = e.target.result;
+                    savePersonagem(nome, imagemBase64);
+                };
+                reader.readAsDataURL(file);
+            } else {
+                savePersonagem(nome, "");
+            }
+        }
+
+        // Salva o personagem
+        function savePersonagem(nome, imagem) {
+            const personagem = { nome: nome, imagem: imagem };
+
+            if(editingIndex >= 0) {
+                data.personagens[editingIndex] = personagem;
+                editingIndex = -1;
+            } else {
+                data.personagens.push(personagem);
+            }
+
+            saveData();
+            renderList();
+            renderForm();
+        }
+
+        // Abre a página individual do personagem
+        function openPersonagem(index) {
+            currentPersonagemIndex = index;
+            document.getElementById("content").style.display = "none";
+            document.getElementById("personagem-page").style.display = "block";
+
+            const personagem = data.personagens[index];
+            document.getElementById("personagem-nome").innerText = personagem.nome;
+
+            const detalhesDiv = document.getElementById("personagem-detalhes");
+            detalhesDiv.innerHTML = personagem.imagem ? `<img src="${personagem.imagem}" alt="Imagem do personagem"><br>` : "";
+            detalhesDiv.innerHTML += `<p><strong>Nome:</strong> ${personagem.nome}</p>`;
+        }
+
+        // Edita o personagem
+        function editPersonagem() {
+            editingIndex = currentPersonagemIndex;
+            document.getElementById("personagem-page").style.display = "none";
+            document.getElementById("content").style.display = "block";
+            renderForm(data.personagens[currentPersonagemIndex]);
+        }
+
+        // Exclui o personagem
+        function deletePersonagem() {
+            data.personagens.splice(currentPersonagemIndex, 1);
+            saveData();
+            closePersonagem();
+            renderList();
+        }
+
+        // Fecha a página do personagem
+        function closePersonagem() {
+            document.getElementById("personagem-page").style.display = "none";
+            document.getElementById("content").style.display = "block";
+        }
+
+        // Volta para o menu principal
+        function goBack() {
+            document.getElementById("content").style.display = "none";
+            document.getElementById("personagem-page").style.display = "none";
+            document.getElementById("menu").style.display = "block";
+        }
+
+        // Exporta os dados
+        function exportData() {
+            const dataStr = JSON.stringify(data);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'bibliotecaData.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Importa os dados
+        function importDataPrompt() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'application/json';
+            input.onchange = e => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = event => {
+                    try {
+                        const importedData = JSON.parse(event.target.result);
+                        data = importedData;
+                        saveData();
+                        alert('Dados importados com sucesso!');
+                        renderList();
+                    } catch (err) {
+                        alert('Erro ao importar dados!');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        // Service worker para PWA
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js');
+        }
+    </script>
+</body>
+</html>
